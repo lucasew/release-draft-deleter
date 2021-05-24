@@ -5,20 +5,83 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GitHub release draft deleter</title>
+<style>
+body, #container {
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+}
+#container {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    justify-content: space-around;
+    max-width: min(80vw, 600px);
+}
+
+#inner-container {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+}
+
+input, button {
+    width: min(60vw, 500px);
+    border: 1px grey solid;
+    border-radius: 10px;
+    padding: 10px;
+    margin: 5px;
+    box-sizing: border-box;
+}
+
+button:hover {
+    background-color: gray;
+    color: white;
+}
+p {
+    text-align: justify;
+}
+
+h1 {
+    text-align: center;
+}
+
+#log {
+    overflow-y: scroll;
+    width: 100vw;
+}
+
+::-webkit-input-placeholer, :-moz-placeholder, input {
+    text-align: center;
+}
+
+
+</style>
 </head>
 <body>
-    <h1>GitHub release draft deleter</h1>
-    <p>If you are lazy like me you can use query strings to pre-fill the elements like user, repo and token</p>
-    <p>All the data is processed locally. The only communication is with GitHub API</p>
-    <h1>Token</h1>
-    <input id="token" type="text"/> 
-    <h1>User</h1>
-    <input id="user" type="text" />
-    <h1>Repository</h1>
-    <input id="repo" type="text" />
-    <br>
-    <button id="start" hidden="true">Start</button>
-    <div id="log"></div>
+    <div id="container">
+        <h1>GitHub release draft deleter</h1>
+        <div>
+            <p>If you are lazy like me you can use query strings to pre-fill the elements like user, repo and token.</p>
+            <p>All the data is processed locally. The only communication is with GitHub API.</p>
+        </div>
+        <!-- <h1>Token</h1> -->
+        <div id="inner-container">
+            <input id="token" placeholder="Token" type="text"/> 
+            <!-- <h1>User</h1> -->
+            <input id="user" placeholder="User" type="text" />
+            <!-- <h1>Repository</h1> -->
+            <input id="repo" placeholder="Repository" type="text" />
+        </div>
+        <br>
+        <button id="start" hidden="true">Start</button>
+        <div id="log"></div>
+    </div>
     <script>
     (function() {
         let url = new URL(window.location.href)
@@ -30,6 +93,15 @@
         const token = document.getElementById("token").value.trim()
         const user = document.getElementById("user").value.trim()
         const repo = document.getElementById("repo").value.trim()
+        if (token.length === 0) {
+            return alert("Token not specified")
+        }
+        if (user.length === 0) {
+            return alert("User not specified")
+        }
+        if (repo.length === 0) {
+            return alert("Repository not specified")
+        }
         const url = `https://api.github.com/repos/${user}/${repo}/releases`
         const results = await fetch(url, {
             headers: {
