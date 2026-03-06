@@ -4,7 +4,7 @@ node = "20.11.1"
 
 [env]
 npm_config_ignore_scripts = "true"
-PATH = "{{config_root}}/.mise/bin:{{env.PATH}}"
+PATH = "{{config_root}}/scripts:{{env.PATH}}"
 
 [tasks.lint]
 run = "workspaced codebase lint"
