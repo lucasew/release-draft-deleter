@@ -32,7 +32,7 @@ jobs:
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add .
             git commit -m "chore: auto codegen"
-            git "push" origin auto-codegen-${GITHUB_SHA} || true
+            git push origin auto-codegen-${GITHUB_SHA} || true
             gh pr create --title "chore: auto codegen" --body "Auto codegen PR" --head auto-codegen-${GITHUB_SHA} || true
           fi
         env:

@@ -4,12 +4,13 @@ node = "20.11.1"
 
 [env]
 npm_config_ignore_scripts = "true"
+PATH = "{{config_root}}/.mise/bin:{{env.PATH}}"
 
 [tasks.lint]
-run = "npx --no-install workspaced codebase lint"
+run = "workspaced codebase lint"
 
 [tasks.fmt]
-run = "npx --no-install workspaced codebase format"
+run = "workspaced codebase format"
 
 [tasks.test]
 depends = ["test:*"]
