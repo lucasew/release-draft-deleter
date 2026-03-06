@@ -2,6 +2,9 @@
 node = "20.11.1"
 "npm:workspaced" = "0.1.0"
 
+[env]
+npm_config_ignore_scripts = "true"
+
 [tasks.lint]
 run = "workspaced codebase lint"
 
