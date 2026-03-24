@@ -83,12 +83,25 @@ h1 {
         <div id="log"></div>
     </div>
     <script>
+    /**
+     * Bootstraps the form state by hydrating input fields from URL search parameters.
+     * This enables sharing pre-filled URLs (e.g., `?user=foo&repo=bar`) to bypass manual entry.
+     * Modifies the DOM synchronously during script execution.
+     */
     (function() {
         let url = new URL(window.location.href)
         document.getElementById("token").value = url.searchParams.get("token")
         document.getElementById("user").value = url.searchParams.get("user")
         document.getElementById("repo").value = url.searchParams.get("repo")
     })()
+
+    /**
+     * Fetches all releases for the target repository via the GitHub REST API.
+     * Requires a GitHub Personal Access Token with at least read access to repository contents.
+     * Will interrupt the flow with a blocking `alert` if any required form field is empty.
+     *
+     * @returns {Promise<Array<Object>|void>} The parsed JSON response array from GitHub, or void if validation fails.
+     */
     async function listReleases() {
         const token = document.getElementById("token").value.trim()
         const user = document.getElementById("user").value.trim()
@@ -112,6 +125,15 @@ h1 {
         console.log(url)
         return await results.json()
     }
+
+    /**
+     * Appends a real-time status tracker to the DOM for a given asynchronous operation.
+     * Mutates the `#log` container to indicate "WIP", updating to "OK" or "ERR" upon resolution.
+     * This acts as the primary user-facing feedback mechanism for background network requests.
+     *
+     * @param {Promise} promise - The pending operation to track.
+     * @param {string} description - Human-readable label for the operation (e.g., "Delete 'v1.0.0'").
+     */
     function logPromise(promise, description) {
         const statusMsg = document.createElement("p")
         document.getElementById("log").appendChild(statusMsg)
@@ -124,6 +146,14 @@ h1 {
             statusMsg.textContent = `${description} - ERR ${err.message || err}`
         })
     }
+
+    /**
+     * Orchestrates the deletion workflow: fetches all releases, isolates drafts,
+     * and dispatches parallel deletion requests for each draft found.
+     * Automatically triggers a fake error log if no drafts exist to provide visible feedback.
+     *
+     * @param {Event} e - The form submission or click event.
+     */
     async function handleSubmit(e) {
         e.preventDefault()
         const releases = await listReleases()
@@ -136,6 +166,16 @@ h1 {
             logPromise(handleDraftDelete(draft), `Delete '${draft.name}' (${draft.html_url})`)
         })
     }
+
+    /**
+     * Executes the destructive HTTP DELETE request against the GitHub API for a single draft.
+     * Requires the `repo` scope on the provided Personal Access Token to authorize the deletion.
+     * Guards against accidental deletion of published releases via an explicit draft check.
+     *
+     * @param {Object} release - The GitHub release object payload.
+     * @returns {Promise<string>} The HTTP status code and text indicating outcome.
+     * @throws {string} If the passed release is not explicitly marked as a draft.
+     */
     async function handleDraftDelete(release) {
         if (!release.draft) {
             throw `"${release.html_url}" is not a draft release`
