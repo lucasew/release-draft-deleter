@@ -67,7 +67,7 @@ h1 {
     <div id="container">
         <h1>GitHub release draft deleter</h1>
         <div>
-            <p>If you are lazy like me you can use query strings to pre-fill the elements like user, repo and token.</p>
+            <p>If you are lazy like me you can use URL hash parameters (e.g. <code>#token=abc&user=torvalds&repo=linux</code>) to pre-fill the elements like user, repo and token.</p>
             <p>All the data is processed locally. The only communication is with GitHub API.</p>
         </div>
         <!-- <h1>Token</h1> -->
@@ -85,9 +85,21 @@ h1 {
     <script>
     (function() {
         let url = new URL(window.location.href)
-        document.getElementById("token").value = url.searchParams.get("token")
-        document.getElementById("user").value = url.searchParams.get("user")
-        document.getElementById("repo").value = url.searchParams.get("repo")
+        let hashParams = new URLSearchParams(window.location.hash.slice(1))
+
+        let token = hashParams.get("token") || url.searchParams.get("token")
+        let user = hashParams.get("user") || url.searchParams.get("user")
+        let repo = hashParams.get("repo") || url.searchParams.get("repo")
+
+        if (token) document.getElementById("token").value = token;
+        if (user) document.getElementById("user").value = user;
+        if (repo) document.getElementById("repo").value = repo;
+
+        // Clean up the URL to prevent token leakage
+        if (token || user || repo) {
+            let cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+            window.history.replaceState({path: cleanUrl}, '', cleanUrl);
+        }
     })()
     async function listReleases() {
         const token = document.getElementById("token").value.trim()

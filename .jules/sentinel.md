@@ -1,0 +1,1 @@
+- 2026-03-26: [High] Sensitive info (token) leaked via URL query parameters, spotted by checking window.location.href or url.searchParams for secrets.
