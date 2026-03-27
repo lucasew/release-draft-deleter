@@ -1,0 +1,1 @@
+- 2026-03-27: [Medium] Cleartext display of sensitive info via <input type="text"> instead of "password" for tokens.
