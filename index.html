@@ -29,6 +29,9 @@ body, #container {
     align-items: center;
     flex-direction: column;
 }
+#params-form {
+    display: contents;
+}
 
 input, button {
     width: min(60vw, 500px);
@@ -72,45 +75,67 @@ h1 {
         </div>
         <!-- <h1>Token</h1> -->
         <div id="inner-container">
-            <input id="token" placeholder="Token" type="text"/> 
-            <!-- <h1>User</h1> -->
-            <input id="user" placeholder="User" type="text" />
-            <!-- <h1>Repository</h1> -->
-            <input id="repo" placeholder="Repository" type="text" />
+            <input id="token" placeholder="Token" type="password" autocomplete="new-password" />
+            <form id="params-form">
+                <!-- <h1>User</h1> -->
+                <input id="user" placeholder="User" type="text" />
+                <!-- <h1>Repository</h1> -->
+                <input id="repo" placeholder="Repository" type="text" />
+                <button type="submit">Start</button>
+            </form>
         </div>
-        <br>
-        <button id="start" hidden="true">Start</button>
         <div id="log"></div>
     </div>
     <script>
     (function() {
         let url = new URL(window.location.href)
-        document.getElementById("token").value = url.searchParams.get("token")
-        document.getElementById("user").value = url.searchParams.get("user")
-        document.getElementById("repo").value = url.searchParams.get("repo")
+        document.getElementById("token").value = url.searchParams.get("token") || ''
+        document.getElementById("user").value = url.searchParams.get("user") || ''
+        document.getElementById("repo").value = url.searchParams.get("repo") || ''
     })()
     async function listReleases() {
         const token = document.getElementById("token").value.trim()
         const user = document.getElementById("user").value.trim()
         const repo = document.getElementById("repo").value.trim()
         if (token.length === 0) {
-            return alert("Token not specified")
+            throw new Error("Token not specified")
         }
         if (user.length === 0) {
-            return alert("User not specified")
+            throw new Error("User not specified")
         }
         if (repo.length === 0) {
-            return alert("Repository not specified")
+            throw new Error("Repository not specified")
         }
-        const url = `https://api.github.com/repos/${user}/${repo}/releases`
-        const results = await fetch(url, {
-            headers: {
-                "accept": "application/vnd.github.v3+json",
-                "authorization": `token ${token}`
+        const perPage = 100
+        let page = 1
+        const all = []
+        while (true) {
+            const url = `https://api.github.com/repos/${user}/${repo}/releases?per_page=${perPage}&page=${page}`
+            const results = await fetch(url, {
+                headers: {
+                    "accept": "application/vnd.github.v3+json",
+                    "authorization": `token ${token}`
+                }
+            })
+            console.log(url)
+            if (!results.ok) {
+                let msg = `${results.status} ${results.statusText}`
+                try {
+                    const err = await results.json()
+                    if (err && err.message) {
+                        msg += ` - ${err.message}`
+                    }
+                } catch (_) {}
+                throw new Error(msg)
             }
-        })
-        console.log(url)
-        return await results.json()
+            const items = await results.json()
+            all.push(...items)
+            if (items.length < perPage) {
+                break
+            }
+            page++
+        }
+        return all
     }
     function logPromise(promise, description) {
         const statusMsg = document.createElement("p")
@@ -126,31 +151,48 @@ h1 {
     }
     async function handleSubmit(e) {
         e.preventDefault()
-        const releases = await listReleases()
-        const drafts = releases.filter((v) => v.draft)
-        console.log(drafts)
-        if (drafts.length === 0) {
-            logPromise(Promise.reject("No draft to delete or invalid token"), "")
+        const logEl = document.getElementById("log")
+        try {
+            const releases = await listReleases()
+            const drafts = releases.filter((v) => v.draft)
+            console.log(drafts)
+            if (drafts.length === 0) {
+                const p = document.createElement("p")
+                p.textContent = "No draft releases found."
+                logEl.appendChild(p)
+                return
+            }
+            drafts.forEach((draft) => {
+                logPromise(handleDraftDelete(draft), `Delete '${draft.name || draft.tag_name}' (${draft.html_url})`)
+            })
+        } catch (err) {
+            const p = document.createElement("p")
+            p.textContent = `Error listing releases: ${err.message || err}`
+            logEl.appendChild(p)
         }
-        drafts.forEach((draft) => {
-            logPromise(handleDraftDelete(draft), `Delete '${draft.name}' (${draft.html_url})`)
-        })
     }
     async function handleDraftDelete(release) {
         if (!release.draft) {
-            throw `"${release.html_url}" is not a draft release`
+            throw new Error(`"${release.html_url}" is not a draft release`)
         }
+        const token = document.getElementById("token").value.trim()
         const res = await fetch(release.url, {
             method: "DELETE",
             headers: {
-                "authorization": `token ${document.getElementById("token").value.trim()}`
+                "authorization": `token ${token}`
             }
         })
-        return `${res.status} ${res.statusText}`
+        if (!res.ok) {
+            let msg = `${res.status} ${res.statusText}`
+            try {
+                const err = await res.json()
+                if (err && err.message) msg += ` - ${err.message}`
+            } catch (_) {}
+            throw new Error(msg)
+        }
+        return "deleted"
     }
-    const start = document.getElementById("start")
-    start.addEventListener('click', handleSubmit)
-    start.hidden = false
+    document.getElementById("params-form").addEventListener('submit', handleSubmit)
     console.log("Ready")
     </script>
 </body>
