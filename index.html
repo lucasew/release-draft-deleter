@@ -87,6 +87,9 @@ h1 {
         <div id="log"></div>
     </div>
     <script>
+    function reportError(error, metadata) {
+        console.error("Centralized Error Report:", error, metadata);
+    }
     (function() {
         let url = new URL(window.location.href)
         document.getElementById("token").value = url.searchParams.get("token") || ''
@@ -125,7 +128,9 @@ h1 {
                     if (err && err.message) {
                         msg += ` - ${err.message}`
                     }
-                } catch (_) {}
+                } catch (e) {
+                    reportError(e, { context: "listReleases_json_parse", status: results.status })
+                }
                 throw new Error(msg)
             }
             const items = await results.json()
@@ -146,6 +151,7 @@ h1 {
             statusMsg.textContent = `${description} - OK ${msg}`
         })
         .catch((err) => {
+            reportError(err, { context: "logPromise", description })
             statusMsg.textContent = `${description} - ERR ${err.message || err}`
         })
     }
@@ -166,6 +172,7 @@ h1 {
                 logPromise(handleDraftDelete(draft), `Delete '${draft.name || draft.tag_name}' (${draft.html_url})`)
             })
         } catch (err) {
+            reportError(err, { context: "handleSubmit" })
             const p = document.createElement("p")
             p.textContent = `Error listing releases: ${err.message || err}`
             logEl.appendChild(p)
@@ -187,7 +194,9 @@ h1 {
             try {
                 const err = await res.json()
                 if (err && err.message) msg += ` - ${err.message}`
-            } catch (_) {}
+            } catch (e) {
+                reportError(e, { context: "handleDraftDelete_json_parse", status: res.status })
+            }
             throw new Error(msg)
         }
         return "deleted"
