@@ -67,14 +67,14 @@ h1 {
 </style>
 </head>
 <body>
-    <div id="container">
+    <main id="container">
         <h1>GitHub release draft deleter</h1>
-        <div>
+        <header>
             <p>If you are lazy like me you can use query strings to pre-fill the elements like user, repo and token.</p>
             <p>All the data is processed locally. The only communication is with GitHub API.</p>
-        </div>
+        </header>
         <!-- <h1>Token</h1> -->
-        <div id="inner-container">
+        <section id="inner-container">
             <input id="token" placeholder="Token" type="password" autocomplete="new-password" />
             <form id="params-form">
                 <!-- <h1>User</h1> -->
@@ -83,9 +83,9 @@ h1 {
                 <input id="repo" placeholder="Repository" type="text" />
                 <button type="submit">Start</button>
             </form>
-        </div>
-        <div id="log"></div>
-    </div>
+        </section>
+        <section id="log"></section>
+    </main>
     <script>
     function reportError(error, metadata) {
         console.error("Centralized Error Report:", error, metadata);
@@ -120,7 +120,6 @@ h1 {
                     "authorization": `token ${token}`
                 }
             })
-            console.log(url)
             if (!results.ok) {
                 let msg = `${results.status} ${results.statusText}`
                 try {
@@ -161,7 +160,6 @@ h1 {
         try {
             const releases = await listReleases()
             const drafts = releases.filter((v) => v.draft)
-            console.log(drafts)
             if (drafts.length === 0) {
                 const p = document.createElement("p")
                 p.textContent = "No draft releases found."
@@ -202,7 +200,6 @@ h1 {
         return "deleted"
     }
     document.getElementById("params-form").addEventListener('submit', handleSubmit)
-    console.log("Ready")
     </script>
 </body>
 </html>
