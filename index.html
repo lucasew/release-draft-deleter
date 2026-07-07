@@ -6,28 +6,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GitHub release draft deleter</title>
 <style>
+body, #container, #inner-container {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+}
+
 body, #container {
     width: 100vw;
     height: 100vh;
     margin: 0;
     padding: 0;
-
-    display: flex;
-    align-items: center;
-    flex-direction: column;
 }
+
 #container {
-    display: flex;
-    align-items: center;
-    flex-direction: column;
     justify-content: space-around;
     max-width: min(80vw, 600px);
-}
-
-#inner-container {
-    display: flex;
-    align-items: center;
-    flex-direction: column;
 }
 #params-form {
     display: contents;
