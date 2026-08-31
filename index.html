@@ -90,6 +90,22 @@ h1 {
         document.getElementById("user").value = url.searchParams.get("user") || ''
         document.getElementById("repo").value = url.searchParams.get("repo") || ''
     })()
+
+    async function assertGitHubResponse(res, contextName) {
+        if (!res.ok) {
+            let msg = `${res.status} ${res.statusText}`
+            try {
+                const err = await res.json()
+                if (err && err.message) {
+                    msg += ` - ${err.message}`
+                }
+            } catch (e) {
+                reportError(e, { context: `${contextName}_json_parse`, status: res.status })
+            }
+            throw new Error(msg)
+        }
+    }
+
     async function listReleases() {
         const token = document.getElementById("token").value.trim()
         const user = document.getElementById("user").value.trim()
@@ -114,18 +130,7 @@ h1 {
                     "authorization": `token ${token}`
                 }
             })
-            if (!results.ok) {
-                let msg = `${results.status} ${results.statusText}`
-                try {
-                    const err = await results.json()
-                    if (err && err.message) {
-                        msg += ` - ${err.message}`
-                    }
-                } catch (e) {
-                    reportError(e, { context: "listReleases_json_parse", status: results.status })
-                }
-                throw new Error(msg)
-            }
+            await assertGitHubResponse(results, "listReleases")
             const items = await results.json()
             all.push(...items)
             if (items.length < perPage) {
@@ -181,16 +186,7 @@ h1 {
                 "authorization": `token ${token}`
             }
         })
-        if (!res.ok) {
-            let msg = `${res.status} ${res.statusText}`
-            try {
-                const err = await res.json()
-                if (err && err.message) msg += ` - ${err.message}`
-            } catch (e) {
-                reportError(e, { context: "handleDraftDelete_json_parse", status: res.status })
-            }
-            throw new Error(msg)
-        }
+        await assertGitHubResponse(res, "handleDraftDelete")
         return "deleted"
     }
     document.getElementById("params-form").addEventListener('submit', handleSubmit)
